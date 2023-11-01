@@ -1,0 +1,17 @@
+inherit python3-wheel
+
+NAME=python-flask
+VERSION=3.0.0
+RELEASE=1
+CATEGORY=Python
+SUMMARY='The Python micro framework for building web applications'
+DESCRIPTION='Flask is a lightweight WSGI web application framework. It is
+designed to make getting started quick and easy, with the ability to scale up
+to complex applications.'
+HOMEPAGE=https://flask.palletsprojects.com
+LICENSE=BSD-3-Clause
+
+SRC_URI="https://github.com/pallets/flask/archive/refs/tags/${PV}.tar.gz"
+BUILD_REQUIRES='python38-wheel python39-wheel'
+
+ARCH=noarch
