@@ -1,3 +1,4 @@
+inherit python3
 inherit python-wheel
 
 NAME=python-flask
@@ -12,6 +13,26 @@ HOMEPAGE=https://flask.palletsprojects.com
 LICENSE=BSD-3-Clause
 
 SRC_URI="https://github.com/pallets/flask/archive/refs/tags/${PV}.tar.gz"
-BUILD_REQUIRES='python38-wheel python39-wheel'
 
 ARCH=noarch
+
+append_to_var () {
+	local -n varname="$1"
+	varname+="$2"
+}
+
+for v in ${PYTHON_WHEEL_VERSIONS//:/ }; do
+	append_to_var "python${v/.}_flask_CONTENTS" " usr/bin/flask$v"
+	append_to_var BUILD_REQUIRES " python${v/.}-wheel"
+done
+append_to_var "python${PYTHON3_VERSION/.}_flask_CONTENTS" usr/bin/flask
+
+src_install () {
+	cd "$B"
+	python_wheel_install
+
+	cd "$D"
+	for v in ${PYTHON_WHEEL_VERSIONS//:/ }; do
+		cp usr/bin/flask usr/bin/flask"$v"
+	done
+}
