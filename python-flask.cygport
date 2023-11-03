@@ -16,16 +16,26 @@ SRC_URI="https://github.com/pallets/flask/archive/refs/tags/${PV}.tar.gz"
 
 ARCH=noarch
 
-append_to_var () {
-	local -n varname="$1"
-	varname+="$2"
+build_contents () {
+	local python_version python_pkgversion
+	local -a contents
+	local -n contents_var
+
+	python_version="$1"
+	python_pkgversion="${python_version/.}"
+
+	contents=("usr/bin/flask$python_version")
+	if [[ "$PYTHON3_VERSION" = "$python_version" ]]; then
+		contents+=(usr/bin/flask)
+	fi
+
+	contents_var="python${python_pkgversion}_flask_CONTENTS"
+	contents_var="${contents_var:+$contents_var }${contents[*]}"
 }
 
 for v in ${PYTHON_WHEEL_VERSIONS//:/ }; do
-	append_to_var "python${v/.}_flask_CONTENTS" " usr/bin/flask$v"
-	append_to_var BUILD_REQUIRES " python${v/.}-wheel"
+	build_contents "$v"
 done
-append_to_var "python${PYTHON3_VERSION/.}_flask_CONTENTS" usr/bin/flask
 
 src_install () {
 	cd "$B"
