@@ -16,7 +16,7 @@ SRC_URI="https://github.com/pallets/flask/archive/refs/tags/${PV}.tar.gz"
 
 ARCH=noarch
 
-build_contents () {
+handle_version () {
 	local python_version python_pkgversion
 	local -a contents
 	local -n contents_var
@@ -31,11 +31,18 @@ build_contents () {
 
 	contents_var="python${python_pkgversion}_flask_CONTENTS"
 	contents_var="${contents_var:+$contents_var }${contents[*]}"
+
+	BUILD_REQUIRES="${BUILD_REQUIRES:+$BUILD_REQUIRES }python${python_pkgversion}-tox"
 }
 
 for v in ${PYTHON_WHEEL_VERSIONS//:/ }; do
-	build_contents "$v"
+	handle_version "$v"
 done
+
+src_test () {
+	cd "$B"
+	tox
+}
 
 src_install () {
 	cd "$B"
