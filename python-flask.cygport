@@ -16,23 +16,118 @@ SRC_URI="https://github.com/pallets/flask/archive/refs/tags/${PV}.tar.gz"
 
 ARCH=noarch
 
+extend_var () {
+	local -n var
+	var="$1"
+	shift
+	var="${var:+$var }$*"
+}
+
 handle_version () {
-	local python_version python_pkgversion
-	local -a contents
-	local -n contents_var
+	local version pkgversion contents_var
+	local majver minver
 
-	python_version="$1"
-	python_pkgversion="${python_version/.}"
+	version="$1"
+	pkgversion="${version/.}"
+	majver="${version%%.*}"
+	minver="${version#${minver}.}"
 
-	contents=("usr/bin/flask$python_version")
-	if [[ "$PYTHON3_VERSION" = "$python_version" ]]; then
-		contents+=(usr/bin/flask)
+	contents_var="python${pkgversion}_flask_CONTENTS"
+	extend_var "$contents_var" "usr/bin/flask$version"
+	if [[ "$version" = "$PYTHON3_VERSION" ]]; then
+		extend_var "$contents_var" usr/bin/flask
 	fi
 
-	contents_var="python${python_pkgversion}_flask_CONTENTS"
-	contents_var="${contents_var:+$contents_var }${contents[*]}"
-
-	BUILD_REQUIRES="${BUILD_REQUIRES:+$BUILD_REQUIRES }python${python_pkgversion}-tox"
+	# Notes on dependencies:
+	#
+	# Jinja2>=3.1.2: a project dependency in pyproject.toml and a testenv
+	# dependency in tox.ini; available in Cygwin.
+	#
+	# Pallets-Sphinx-Themes: in requirements/docs.in; not currently
+	# available in Cygwin and probably not worth making available if it can
+	# be generated in the packaging process.
+	#
+	# Sphinx: in requirements/docs.in; available in Cygwin.
+	#
+	# Werkzeug>=3.0.0: a project dependency in pyproject.toml a testenv
+	# dependency in tox.ini; not currently available in Cygwin.
+	#
+	# asgiref>=3.2: an optional project dependency for async in
+	# pyproject.toml, and in requirements/tests.in; not currently available
+	# in Cygwin.
+	#
+	# blinker>=1.6.2: a project dependency in pyproject.toml; not currently
+	# available in Cygwin.
+	#
+	# build: in requirements/build.in; not currently available in Cygwin
+	# but also quite possibly not actually used by flask at all anyway.
+	#
+	# click>=8.1.3: a project dependency in pyproject.toml and a testenv
+	# dependency in tox.ini; not currently available in Cygwin.
+	#
+	# coverage: a tool in pyproject.toml; not currently available in
+	# Cygwin.
+	#
+	# cryptography: in requirements/typing.in; not currently available in
+	# Cygwin.
+	#
+	# flit: a tool in pyproject.toml; not currently available in Cygwin.
+	#
+	# flit_core<4: a build system dependency in pyproject.toml; not
+	# currently available in Cygwin.
+	#
+	# greenlet if python_version < 3.11: in requirements/tests.in; not
+	# currently available in Cygwin.
+	#
+	# importlib-metadata>=3.6.0 if python_version < 3.10: a project
+	# dependency in pyproject.toml; available in Cygwin.
+	#
+	# itsdangerous>=2.1.2: a project dependency in pyproject.toml and a
+	# testenv dependency in tox.ini; not currently available in Cygwin.
+	#
+	# markupsafe: a testenv dependency in tox.ini; available in Cygwin.
+	#
+	# mypy: a tool in pyproject.toml, and in requirements/typing.in; not
+	# currently available in Cygwin.
+	#
+	# pip-compile-multi: in requirements/dev.in; not currently available in
+	# Cygwin but might not be necessary just for building.
+	#
+	# pre-commit: a style testenv dependency in tox.ini and also in
+	# requirements/dev.in; not currently available in Cygwin.
+	#
+	# pytest: a tool in pyproject.toml and in requirements/tests.in;
+	# available in Cygwin.
+	#
+	# python-dotenv: an optional dependency for dotenv in pyproject.toml,
+	# and in requirements/tests.in; not currently available in Cygwin.
+	#
+	# sphinx-issues: in requirements/docs.in; not currently available in
+	# Cygwin.
+	#
+	# sphinx-tabs: in requirements/docs.in; not currently available in
+	# Cygwin.
+	#
+	# sphinxcontrib-log-cabinet: in requirements/docs.in; not currently
+	# available in Cygwin.
+	#
+	# tox: implied by existence of tox.ini, and in requirements/dev.in;
+	# available in Cygwin.
+	#
+	# types-contextvars: in requirements/typing.in; not currently available
+	# in Cygwin.
+	#
+	# types-dataclasses: in requirements/typing.in; not currently available
+	# in Cygwin.
+	extend_var BUILD_REQUIRES \
+		"python${pkgversion}-jinja2" \
+		"python${pkgversion}-markupsafe" \
+		"python${pkgversion}-pytest" \
+		"python${pkgversion}-sphinx" \
+		"python${pkgversion}-tox"
+	if (( (majver < 3) || (majver == 3 && minver < 10) )); then
+		extend_var BUILD_REQUIRES "python${pkgversion}-importlib-metadata"
+	fi
 }
 
 for v in ${PYTHON_WHEEL_VERSIONS//:/ }; do
