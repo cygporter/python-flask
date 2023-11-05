@@ -136,6 +136,13 @@ done
 
 src_test () {
 	cd "$B"
+
+	# Some tests fail because of how they resolve the symlinks.  To avoid
+	# that, make the tests directory be a straightforward copy rather than
+	# a set of symlinks.
+	rm -r tests
+	cp -r "$S"/tests ./tests
+
 	tox
 }
 
